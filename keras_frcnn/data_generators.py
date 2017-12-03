@@ -84,9 +84,9 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	num_anchors = len(anchor_sizes) * len(anchor_ratios)	
 
 	# calculate the output map size based on the network architecture
-
+	#print (resized_width, resized_height)
 	(output_width, output_height) = img_length_calc_function(resized_width, resized_height)
-
+	#print (output_width, output_height)
 	n_anchratios = len(anchor_ratios)
 	
 	# initialise empty output objectives
@@ -244,6 +244,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=1)
 	y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=1), y_rpn_regr], axis=1)
 
+	#print np.copy(y_rpn_regr).shape #(1,72,38,50)
 	return np.copy(y_rpn_cls), np.copy(y_rpn_regr)
 
 
@@ -329,7 +330,7 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 					x_img = np.transpose(x_img, (0, 2, 3, 1))
 					y_rpn_cls = np.transpose(y_rpn_cls, (0, 2, 3, 1))
 					y_rpn_regr = np.transpose(y_rpn_regr, (0, 2, 3, 1))
-
+				#print np.copy(y_rpn_regr).shape #(1, 38, 50, 72)
 				yield np.copy(x_img), [np.copy(y_rpn_cls), np.copy(y_rpn_regr)], img_data_aug
 
 			except Exception as e:

@@ -31,6 +31,7 @@ class Config:
 		self.num_rois = 4
 
 		# stride at the RPN (this depends on the network configuration)
+		#control the density of the boxes generated (smaller stride = denser box proposals)
 		self.rpn_stride = 16
 
 		self.balanced_classes = False
@@ -55,4 +56,4 @@ class Config:
 		# https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_th_dim_ordering_th_kernels_notop.h5
 		# https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5
 
-		self.model_path = 'model_frcnn.vgg.hdf5'
+		self.model_path = 'model_frcnn.hdf5'
