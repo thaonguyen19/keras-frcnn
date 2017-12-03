@@ -26,6 +26,7 @@ parser.add_option("-p", "--path", dest="train_path", help="Path to training data
 parser.add_option("-o", "--parser", dest="parser", help="Parser to use. One of simple or pascal_voc",
 				default="pascal_voc")
 parser.add_option("-n", "--num_rois", type="int", dest="num_rois", help="Number of RoIs to process at once.", default=32)
+parser.add_option("--network", dest="network", help="Base network to use. Supports mobilenet, vgg or resnet50.", default='mobilenet')
 parser.add_option("--hf", dest="horizontal_flips", help="Augment with horizontal flips in training. (Default=false).", action="store_true", default=False)
 parser.add_option("--vf", dest="vertical_flips", help="Augment with vertical flips in training. (Default=false).", action="store_true", default=False)
 parser.add_option("--rot", "--rot_90", dest="rot_90", help="Augment with 90 degree rotations in training. (Default=false).",
@@ -59,7 +60,18 @@ C.rot_90 = bool(options.rot_90)
 C.model_path = options.output_weight_path
 C.num_rois = int(options.num_rois)
 
-from keras_frcnn import mobilenet as nn
+if options.network == 'vgg':
+	C.network = 'vgg'
+	from keras_frcnn import vgg as nn
+elif options.network == 'resnet50':
+	from keras_frcnn import resnet as nn
+	C.network = 'resnet50'
+elif options.network == 'mobilenet':
+	from keras_frcnn import mobilenet as nn
+	C.network = 'mobilenet'
+else:
+	print('Not a valid model')
+	raise ValueError
 
 # check if weight path was passed via command line
 if options.input_weight_path:
@@ -160,21 +172,17 @@ class_mapping_inv = {v: k for k, v in class_mapping.items()}
 print('Starting training')
 
 vis = True
-file = open(C.result_file, 'a')
-writer = csv.writer(file)
 
 for epoch_num in range(num_epochs):
-	if epoch_num == 2: #60000//epoch_length:
+	if epoch_num == 60000//epoch_length:
 		K.set_value(model_rpn.optimizer.lr, 0.0001)
 		K.set_value(model_classifier.optimizer.lr, 0.0001)
 		K.set_value(model_all.optimizer.lr, 0.0001)
-	print model_rpn.optimizer.lr
 	progbar = generic_utils.Progbar(epoch_length)
 	print('Epoch {}/{}'.format(epoch_num + 1, num_epochs))
 
 	while True:
 		try:
-
 			if len(rpn_accuracy_rpn_monitor) == epoch_length and C.verbose:
 				mean_overlapping_bboxes = float(sum(rpn_accuracy_rpn_monitor))/len(rpn_accuracy_rpn_monitor)
 				rpn_accuracy_rpn_monitor = []
@@ -268,7 +276,10 @@ for epoch_num in range(num_epochs):
 					print('Elapsed time: {}'.format(time.time() - start_time))
 
 				curr_loss = loss_rpn_cls + loss_rpn_regr + loss_class_cls + loss_class_regr
+				file = open(C.result_file, 'a')
+				writer = csv.writer(file)
 				writer.writerow([epoch_num+1, mean_overlapping_bboxes, class_acc, loss_rpn_cls, loss_class_regr, loss_class_cls, loss_class_regr, curr_loss])
+				file.close()
 				iter_num = 0
 				start_time = time.time()
 
@@ -284,5 +295,4 @@ for epoch_num in range(num_epochs):
 			print('Exception: {}'.format(e))
 			continue
 
-file.close()
 print('Training complete, exiting.')

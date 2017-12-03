@@ -21,14 +21,14 @@ class Config:
 		self.anchor_box_ratios = [[1, 1], [1./math.sqrt(2), 2./math.sqrt(2)], [2./math.sqrt(2), 1./math.sqrt(2)]]
 
 		# size to resize the smallest side of the image
-		self.im_size = 400 ############################
+		self.im_size = 600 ############################
 
 		# image channel-wise mean to subtract
 		self.img_channel_mean = [103.939, 116.779, 123.68]
 		self.img_scaling_factor = 1.0
 
 		# number of ROIs at once
-		self.num_rois = 4
+		self.num_rois = 2
 
 		# stride at the RPN (this depends on the network configuration)
 		#control the density of the boxes generated (smaller stride = denser box proposals)

@@ -22,7 +22,7 @@ parser.add_option("-n", "--num_rois", type="int", dest="num_rois",
 parser.add_option("--config_filename", dest="config_filename", help=
 				"Location to read the metadata related to the training (generated when training).",
 				default="config.pickle")
-parser.add_option("--network", dest="network", help="Base network to use. Supports vgg or resnet50.", default='resnet50')
+parser.add_option("--network", dest="network", help="Base network to use. Supports mobilenet, vgg or resnet50.", default='mobilenet')
 
 (options, args) = parser.parse_args()
 
@@ -39,6 +39,8 @@ if C.network == 'resnet50':
 	import keras_frcnn.resnet as nn
 elif C.network == 'vgg':
 	import keras_frcnn.vgg as nn
+elif C.network == 'mobilenet':
+	import keras_frcnn.mobilenet as nn
 
 # turn off any data augmentation at test time
 C.use_horizontal_flips = False
