@@ -7,7 +7,7 @@ class Config:
 
 		self.verbose = True
 
-		self.network = 'resnet50'
+		self.network = 'mobilenet'
 
 		# setting for data augmentation
 		self.use_horizontal_flips = False
@@ -21,7 +21,7 @@ class Config:
 		self.anchor_box_ratios = [[1, 1], [1./math.sqrt(2), 2./math.sqrt(2)], [2./math.sqrt(2), 1./math.sqrt(2)]]
 
 		# size to resize the smallest side of the image
-		self.im_size = 600
+		self.im_size = 400 ############################
 
 		# image channel-wise mean to subtract
 		self.img_channel_mean = [103.939, 116.779, 123.68]
@@ -31,6 +31,7 @@ class Config:
 		self.num_rois = 4
 
 		# stride at the RPN (this depends on the network configuration)
+		#control the density of the boxes generated (smaller stride = denser box proposals)
 		self.rpn_stride = 16
 
 		self.balanced_classes = False
@@ -55,4 +56,5 @@ class Config:
 		# https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_th_dim_ordering_th_kernels_notop.h5
 		# https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5
 
-		self.model_path = 'model_frcnn.vgg.hdf5'
+		self.model_path = 'model_frcnn.hdf5'
+		self.result_file = 'train_results.csv'

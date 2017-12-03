@@ -6,6 +6,7 @@ import time
 import numpy as np
 from optparse import OptionParser
 import pickle
+import csv
 
 from keras import backend as K
 from keras.optimizers import Adam, SGD, RMSprop
@@ -15,6 +16,7 @@ from keras_frcnn import config, data_generators
 from keras_frcnn import losses as losses
 import keras_frcnn.roi_helpers as roi_helpers
 from keras.utils import generic_utils
+from keras.callbacks import LearningRateScheduler
 
 sys.setrecursionlimit(40000)
 
@@ -24,12 +26,11 @@ parser.add_option("-p", "--path", dest="train_path", help="Path to training data
 parser.add_option("-o", "--parser", dest="parser", help="Parser to use. One of simple or pascal_voc",
 				default="pascal_voc")
 parser.add_option("-n", "--num_rois", type="int", dest="num_rois", help="Number of RoIs to process at once.", default=32)
-parser.add_option("--network", dest="network", help="Base network to use. Supports vgg or resnet50.", default='resnet50')
 parser.add_option("--hf", dest="horizontal_flips", help="Augment with horizontal flips in training. (Default=false).", action="store_true", default=False)
 parser.add_option("--vf", dest="vertical_flips", help="Augment with vertical flips in training. (Default=false).", action="store_true", default=False)
 parser.add_option("--rot", "--rot_90", dest="rot_90", help="Augment with 90 degree rotations in training. (Default=false).",
 				  action="store_true", default=False)
-parser.add_option("--num_epochs", type="int", dest="num_epochs", help="Number of epochs.", default=2000)
+parser.add_option("--num_epochs", type="int", dest="num_epochs", help="Number of epochs.", default=1000)
 parser.add_option("--config_filename", dest="config_filename", help=
 				"Location to store all the metadata related to the training (to be used when testing).",
 				default="config.pickle")
@@ -58,16 +59,7 @@ C.rot_90 = bool(options.rot_90)
 C.model_path = options.output_weight_path
 C.num_rois = int(options.num_rois)
 
-if options.network == 'vgg':
-	C.network = 'vgg'
-	from keras_frcnn import vgg as nn
-elif options.network == 'resnet50':
-	from keras_frcnn import resnet as nn
-	C.network = 'resnet50'
-else:
-	print('Not a valid model')
-	raise ValueError
-
+from keras_frcnn import mobilenet as nn
 
 # check if weight path was passed via command line
 if options.input_weight_path:
@@ -141,11 +133,17 @@ except:
 	print('Could not load pretrained model weights. Weights can be found in the keras application folder \
 		https://github.com/fchollet/keras/tree/master/keras/applications')
 
-optimizer = Adam(lr=1e-5)
-optimizer_classifier = Adam(lr=1e-5)
+#optimizer = Adam(lr=1e-5)
+#optimizer_classifier = Adam(lr=1e-5)
+#def scheduler(epoch):
+#	if epoch >= 60000//epoch_length:
+#		K.set_value(model.optimizer.lr, 0.0001)
+
+#callbacks = [LearningRateScheduler(scheduler)]
+optimizer = SGD(lr=0.001, momentum=0.9, nesterov=False)
 model_rpn.compile(optimizer=optimizer, loss=[losses.rpn_loss_cls(num_anchors), losses.rpn_loss_regr(num_anchors)])
-model_classifier.compile(optimizer=optimizer_classifier, loss=[losses.class_loss_cls, losses.class_loss_regr(len(classes_count)-1)], metrics={'dense_class_{}'.format(len(classes_count)): 'accuracy'})
-model_all.compile(optimizer='sgd', loss='mae')
+model_classifier.compile(optimizer=optimizer, loss=[losses.class_loss_cls, losses.class_loss_regr(len(classes_count)-1)], metrics={'dense_class_{}'.format(len(classes_count)): 'accuracy'})
+model_all.compile(optimizer=optimizer, loss='mae')
 
 epoch_length = 1000
 num_epochs = int(options.num_epochs)
@@ -162,9 +160,15 @@ class_mapping_inv = {v: k for k, v in class_mapping.items()}
 print('Starting training')
 
 vis = True
+file = open(C.result_file, 'a')
+writer = csv.writer(file)
 
 for epoch_num in range(num_epochs):
-
+	if epoch_num == 2: #60000//epoch_length:
+		K.set_value(model_rpn.optimizer.lr, 0.0001)
+		K.set_value(model_classifier.optimizer.lr, 0.0001)
+		K.set_value(model_all.optimizer.lr, 0.0001)
+	print model_rpn.optimizer.lr
 	progbar = generic_utils.Progbar(epoch_length)
 	print('Epoch {}/{}'.format(epoch_num + 1, num_epochs))
 
@@ -239,6 +243,7 @@ for epoch_num in range(num_epochs):
 			losses[iter_num, 4] = loss_class[3]
 
 			iter_num += 1
+			epoch = 0
 
 			progbar.update(iter_num, [('rpn_cls', np.mean(losses[:iter_num, 0])), ('rpn_regr', np.mean(losses[:iter_num, 1])),
 									  ('detector_cls', np.mean(losses[:iter_num, 2])), ('detector_regr', np.mean(losses[:iter_num, 3]))])
@@ -263,6 +268,7 @@ for epoch_num in range(num_epochs):
 					print('Elapsed time: {}'.format(time.time() - start_time))
 
 				curr_loss = loss_rpn_cls + loss_rpn_regr + loss_class_cls + loss_class_regr
+				writer.writerow([epoch_num+1, mean_overlapping_bboxes, class_acc, loss_rpn_cls, loss_class_regr, loss_class_cls, loss_class_regr, curr_loss])
 				iter_num = 0
 				start_time = time.time()
 
@@ -270,7 +276,7 @@ for epoch_num in range(num_epochs):
 					if C.verbose:
 						print('Total loss decreased from {} to {}, saving weights'.format(best_loss,curr_loss))
 					best_loss = curr_loss
-					model_all.save_weights(C.model_path)
+					model_all.save_weights('epoch-%d.hdf5' % (epoch_num+1))
 
 				break
 
@@ -278,4 +284,5 @@ for epoch_num in range(num_epochs):
 			print('Exception: {}'.format(e))
 			continue
 
+file.close()
 print('Training complete, exiting.')

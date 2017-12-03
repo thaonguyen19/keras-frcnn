@@ -32,7 +32,6 @@ def get_img_output_length(width, height):
         for filter_size in filter_sizes:
             input_length = (input_length - filter_size + stride) // stride
         return input_length
-
     return get_output_length(width), get_output_length(height) 
 
 def identity_block(input_tensor, kernel_size, filters, stage, block, trainable=True):
