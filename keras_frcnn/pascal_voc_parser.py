@@ -12,7 +12,6 @@ def get_data(input_path):
 	visualise = False
 
 	data_paths = [os.path.join(input_path,s) for s in ['VOC2007']] #'VOC2012', 
-	
 
 	print('Parsing annotation files')
 
