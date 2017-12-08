@@ -33,7 +33,8 @@ def nn_base(input_tensor=None, trainable=False):
             img_input = Input(tensor=input_tensor, shape=input_shape)
         else:
             img_input = input_tensor
-    base_model = MobileNet(input_shape=None, include_top=False, weights=None)
+    base_model = MobileNet(input_shape=None, include_top=False, weights='imagenet')
+    print ("training with IMAGENET weights")
     ################### REMOVE THE LAST 2 BLOCKS (ids 12 and 13) #####################
     for i in range(12):
         base_model.layers.pop()

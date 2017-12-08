@@ -31,7 +31,7 @@ parser.add_option("--hf", dest="horizontal_flips", help="Augment with horizontal
 parser.add_option("--vf", dest="vertical_flips", help="Augment with vertical flips in training. (Default=false).", action="store_true", default=False)
 parser.add_option("--rot", "--rot_90", dest="rot_90", help="Augment with 90 degree rotations in training. (Default=false).",
 				  action="store_true", default=False)
-parser.add_option("--num_epochs", type="int", dest="num_epochs", help="Number of epochs.", default=1000)
+parser.add_option("--num_epochs", type="int", dest="num_epochs", help="Number of epochs.", default=250)
 parser.add_option("--config_filename", dest="config_filename", help=
 				"Location to store all the metadata related to the training (to be used when testing).",
 				default="config.pickle")
@@ -137,13 +137,13 @@ model_classifier = Model([img_input, roi_input], classifier)
 # this is a model that holds both the RPN and the classifier, used to load/save weights for the models
 model_all = Model([img_input, roi_input], rpn[:2] + classifier)
 
-try:
-	print('loading weights from {}'.format(C.base_net_weights))
-	model_rpn.load_weights(C.base_net_weights, by_name=True)
-	model_classifier.load_weights(C.base_net_weights, by_name=True)
-except:
-	print('Could not load pretrained model weights. Weights can be found in the keras application folder \
-		https://github.com/fchollet/keras/tree/master/keras/applications')
+#try:
+#	print('loading weights from {}'.format(C.base_net_weights))
+#	model_rpn.load_weights(C.base_net_weights, by_name=True)
+#	model_classifier.load_weights(C.base_net_weights, by_name=True)
+#except:
+#	print('Could not load pretrained model weights. Weights can be found in the keras application folder \
+#		https://github.com/fchollet/keras/tree/master/keras/applications')
 
 #optimizer = Adam(lr=1e-5)
 #optimizer_classifier = Adam(lr=1e-5)
