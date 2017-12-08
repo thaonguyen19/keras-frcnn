@@ -22,6 +22,7 @@ parser.add_option("-n", "--num_rois", type="int", dest="num_rois",
 parser.add_option("--config_filename", dest="config_filename", help=
 				"Location to read the metadata related to the training (generated when training).",
 				default="config.pickle")
+parser.add_option("--weights", dest="weights_filename", help="Location to read the pretrained weights")
 parser.add_option("--network", dest="network", help="Base network to use. Supports mobilenet, vgg or resnet50.", default='mobilenet')
 
 (options, args) = parser.parse_args()
@@ -41,7 +42,7 @@ elif C.network == 'vgg':
 	import keras_frcnn.vgg as nn
 elif C.network == 'mobilenet':
 	import keras_frcnn.mobilenet as nn
-
+C.model_path = options.weights_filename
 # turn off any data augmentation at test time
 C.use_horizontal_flips = False
 C.use_vertical_flips = False
@@ -106,6 +107,8 @@ C.num_rois = int(options.num_rois)
 if C.network == 'resnet50':
 	num_features = 1024
 elif C.network == 'vgg':
+	num_features = 512
+elif C.network == 'mobilenet':
 	num_features = 512
 
 if K.image_dim_ordering() == 'th':
@@ -244,6 +247,8 @@ for idx, img_name in enumerate(sorted(os.listdir(img_path))):
 
 	print('Elapsed time = {}'.format(time.time() - st))
 	print(all_dets)
-	cv2.imshow('img', img)
-	cv2.waitKey(0)
+	#cv2.imshow('img', img)
+	#if len(all_dets) > 0:
+		#cv2.imwrite(img_name+'_annotated.png',img)
+		#cv2.waitKey(0)
 	# cv2.imwrite('./results_imgs/{}.png'.format(idx),img)

@@ -24,4 +24,3 @@ for weights_filename in os.listdir(options.weights_folder):
         writer = csv.writer(file)
 	writer.writerow([weights_filename, max_map])
 	file.close()
-print "FINAL: ", max_map, " ", weights_filename

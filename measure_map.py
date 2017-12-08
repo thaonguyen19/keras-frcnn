@@ -187,81 +187,6 @@ def map_main(config_output_filename, img_path, weights_filename, num_rois=32, pa
 		bboxes = {}
 		probs = {}
 
-		for jk in range(R.shape[0] // C.num_rois + 1):
-			ROIs = np.expand_dims(R[C.num_rois * jk:C.num_rois * (jk + 1), :], axis=0)
-			if ROIs.shape[1] == 0:
-				break
-
-			if jk == R.shape[0] // C.num_rois:
-				# pad R
-				curr_shape = ROIs.shape
-				target_shape = (curr_shape[0], C.num_rois, curr_shape[2])
-				ROIs_padded = np.zeros(target_shape).astype(ROIs.dtype)
-				ROIs_padded[:, :curr_shape[1], :] = ROIs
-				ROIs_padded[0, curr_shape[1]:, :] = ROIs[0, 0, :]
-				ROIs = ROIs_padded
-
-			[P_cls, P_regr] = model_classifier_only.predict([F, ROIs])
-
-			for ii in range(P_cls.shape[1]):
-
-				if np.argmax(P_cls[0, ii, :]) == (P_cls.shape[2] - 1):
-					continue
-
-				cls_name = class_mapping[np.argmax(P_cls[0, ii, :])]
-
-				if cls_name not in bboxes:
-					bboxes[cls_name] = []
-					probs[cls_name] = []
-
-				(x, y, w, h) = ROIs[0, ii, :]
-
-				cls_num = np.argmax(P_cls[0, ii, :])
-				try:
-					(tx, ty, tw, th) = P_regr[0, ii, 4 * cls_num:4 * (cls_num + 1)]
-					tx /= C.classifier_regr_std[0]
-					ty /= C.classifier_regr_std[1]
-					tw /= C.classifier_regr_std[2]
-					th /= C.classifier_regr_std[3]
-					x, y, w, h = roi_helpers.apply_regr(x, y, w, h, tx, ty, tw, th)
-				except:
-					pass
-				bboxes[cls_name].append([16 * x, 16 * y, 16 * (x + w), 16 * (y + h)])
-				probs[cls_name].append(np.max(P_cls[0, ii, :]))
-
-		all_dets = []
-
-		for key in bboxes:
-			bbox = np.array(bboxes[key])
-
-			new_boxes, new_probs = roi_helpers.non_max_suppression_fast(bbox, np.array(probs[key]), overlap_thresh=0.5)
-			for jk in range(new_boxes.shape[0]):
-				(x1, y1, x2, y2) = new_boxes[jk, :]
-				det = {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': key, 'prob': new_probs[jk]}
-				all_dets.append(det)
-
-
-		#print('Elapsed time = {}'.format(time.time() - st))
-		t, p = get_map(all_dets, img_data['bboxes'], (fx, fy))
-		for key in t.keys():
-			if key not in T:
-				T[key] = []
-				P[key] = []
-			T[key].extend(t[key])
-			P[key].extend(p[key])
-		all_aps = []
-		for key in T.keys():
-			ap = average_precision_score(T[key], P[key])
-			#print('{} AP: {}'.format(key, ap))
-			all_aps.append(ap)
-		print('mAP = {}'.format(np.mean(np.array(all_aps))))
-		final_map = np.mean(np.array(all_aps))
-		#print(T)
-		#print(P)
-	return final_map
-
-
-
 if __name__ == '__main__':
 	sys.setrecursionlimit(40000)
 
@@ -272,7 +197,7 @@ if __name__ == '__main__':
 					help="Number of ROIs per iteration. Higher means more memory use.", default=32)
 	parser.add_option("--config_filename", dest="config_filename", help=
 					"Location to read the metadata related to the training (generated when training).",
-					default="./keras_frcnn/config.pickle")
+					default="config.pickle")
 	parser.add_option("--weights", dest="weights_filename", help="Location to read the pretrained weights")
 	parser.add_option("-o", "--parser", dest="parser", help="Parser to use. One of simple or pascal_voc",
 					default="pascal_voc"),
@@ -290,3 +215,5 @@ if __name__ == '__main__':
 	weights_filename = options.weights_filename
 	num_rois = int(options.num_rois)
 	map_main(config_output_filename, img_path, weights_filename, num_rois, parser)
+
+

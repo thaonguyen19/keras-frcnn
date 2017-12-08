@@ -89,5 +89,6 @@ ENV/
 .ropeproject
 
 # hdf5
+*.csv
 *.h5
 *.hdf5
