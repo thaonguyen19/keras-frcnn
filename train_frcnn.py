@@ -172,7 +172,6 @@ class_mapping_inv = {v: k for k, v in class_mapping.items()}
 print('Starting training')
 
 vis = True
-count_test = 0
 for epoch_num in range(num_epochs):
 	if epoch_num == 60000//epoch_length:
 		K.set_value(model_rpn.optimizer.lr, 0.0001)
@@ -284,14 +283,6 @@ for epoch_num in range(num_epochs):
 						print('Total loss decreased from {} to {}, saving weights'.format(best_loss,curr_loss))
 					best_loss = curr_loss
 					model_all.save_weights('epoch-%d.hdf5' % (epoch_num+1))
-					count_test += 1
-					if count_test % 5 == 0:
-						mAP = 
-						file = open(C.result_file, 'a')
-						writer = csv.writer(file)
-						writer.writerow([epoch_num+1, mAP, mean_overlapping_bboxes, class_acc, curr_loss])
-						file.close()
-
 				break
 
 		except Exception as e:
